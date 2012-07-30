@@ -28,7 +28,7 @@ time=$(($3 - 14))
 sleep $time
 done
 
-for ((i=$1; i>=$2; i--))
+for ((i=$1; i<=$2; i++))
 do
 gphoto2 --set-config-index /main/capturesettings/shutterspeed=$i
 gphoto2 --capture-image-and-download
