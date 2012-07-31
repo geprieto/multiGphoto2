@@ -9,6 +9,7 @@
  # set this to how much does it take for gphoto to respond. This of course is also
  # the least amount of time between exposures
 cpuoverhead=14
+sleepingtime=$3
 
 # this returns the exposure time based on the index from gphoto2. This is
 # for a NIKON d5100, so you will have to edit this if you want to use it 
@@ -192,15 +193,63 @@ then
 num=0$1
 fi
 echo "exposing and saving image locally into gpcapt$num.jpg..."
+#rm capt*.jpg
 #gphoto2 --capture-image-and-download
 #mv capt0000.jpg  gpcapt$num.jpg
 }
 
-killall PTPCamera #so that the PTP OSX service doesn't conflict with the connection
-
 time=$(($3 - $cpuoverhead))
-j=0
 
+
+# timing the experiment
+totaltime=0
+
+# initial exposures, without exposure change
+for ((i=0; i<$4; i++))
+do
+exp=`exposure $1`
+totaltime=`echo "scale=6;$totaltime+$exp+$sleepingtime" | bc`
+done
+
+initial=$totaltime
+initialinh=`echo "scale=6;$totaltime/3600" | bc`
+echo "For the initial exposures you have a total time of $totaltime seconds"
+echo "That's $initialinh hours in this phase"
+
+# exposures with change
+if [ "$6" == 0 ];
+then
+startexp=$1
+endexp=$2
+else
+startexp=$2
+endexp=$1
+fi
+for ((i=$startexp; i<=$endexp; i++)) 
+do
+exp=`exposure $i`
+totaltime=`echo "scale=6;$totaltime+$exp+$sleepingtime*4" | bc`
+done
+
+middle=`echo "scale=6;$totaltime-$initial" | bc`
+middleinh=`echo "scale=6;$middle/3600" | bc`
+echo "After the variable exposures are done $totaltime seconds have passed"
+echo "That's $middleinh hours in this phase"
+
+# final exposures
+for ((i=0; i<$5; i++))
+do
+exp=`exposure $2`
+totaltime=`echo "scale=6;$totaltime+$exp+$sleepingtime" | bc`
+done
+
+final=`echo "scale=6;$totaltime-$middle-$initial" | bc`
+finalinh=`echo "scale=6;$final/3600" | bc`
+echo "In total the experiment takes $totaltime seconds"
+echo "That's $finalinh hours in this phase"
+
+j=0
+killall PTPCamera #so that the PTP OSX service doesn't conflict with the connection
 
 # initial exposures, without exposure change
 for ((i=0; i<$4; i++))
@@ -212,15 +261,37 @@ sleep $time
 done
 
 # exposures with change
-# ((i=$1; i<=$2; i++)) sunsets
-# ((i=$1; i>=$2; i--)) sunrises
+if [ "$6" == 0 ];
+then
 for ((i=$1; i<=$2; i++)) 
 do
 shutterspeed $i
 expose $j
 j=$(($j + 1))
 sleep $time
+expose $j
+j=$(($j + 1))
+sleep $time
 done
+else
+then
+for ((i=$1; i>=$2; i--)) 
+do
+shutterspeed $i
+expose $j
+j=$(($j + 1))
+sleep $time
+expose $j
+j=$(($j + 1))
+sleep $time
+expose $j
+j=$(($j + 1))
+sleep $time
+expose $j
+j=$(($j + 1))
+sleep $time
+done
+fi
 
 # final exposures
 for ((i=0; i<$5; i++))
