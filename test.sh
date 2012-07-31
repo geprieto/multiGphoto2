@@ -178,7 +178,7 @@ esac
 function shutterspeed(){
 exp=`exposure $1`
 echo "Setting camera exposure to $exp s..."
-#gphoto2 --set-config-index /main/capturesettings/shutterspeed=$1
+gphoto2 --set-config-index /main/capturesettings/shutterspeed=$1
 }
 
 function expose(){
@@ -193,9 +193,9 @@ then
 num=0$1
 fi
 echo "exposing and saving image locally into gpcapt$num.jpg..."
-#rm capt*.jpg
-#gphoto2 --capture-image-and-download
-#mv capt0000.jpg  gpcapt$num.jpg
+rm capt*.jpg
+gphoto2 --capture-image-and-download
+mv capt0000.jpg  gpcapt$num.jpg
 }
 
 time=$(($3 - $cpuoverhead))
@@ -274,7 +274,6 @@ j=$(($j + 1))
 sleep $time
 done
 else
-then
 for ((i=$1; i>=$2; i--)) 
 do
 shutterspeed $i
